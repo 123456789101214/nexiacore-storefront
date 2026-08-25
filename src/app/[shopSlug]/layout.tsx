@@ -44,30 +44,29 @@ export default async function ShopLayout({
   params,
 }: {
   children: ReactNode;
-  params: { shopSlug: string };
+  params: Promise<{ shopSlug: string }>;
 }) {
+  // 1. Await params for Next.js 16 compatibility
   const { shopSlug } = await params;
   const shop = await getShopData(shopSlug);
 
-  // ⚠️ Data Integrity Gate: if shop is null (404 or isActive: false), block render
+  // Data Integrity Gate
   if (!shop) {
     notFound();
   }
 
-  // Hydrate query client so client components don't need to refetch shop data
+  // Hydrate query client using the unwrapped `shopSlug`
   const queryClient = new QueryClient();
-    await queryClient.prefetchQuery({
-    queryKey: storefrontKeys.shop(params.shopSlug),
-    queryFn: () => getShopData(params.shopSlug),
+  await queryClient.prefetchQuery({
+    queryKey: storefrontKeys.shop(shopSlug),
+    queryFn: () => getShopData(shopSlug),
   });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="min-h-screen bg-white font-sans flex flex-col">
         <StoreFrontHeader />
-        <main className="flex-1 flex flex-col">
-          {children}
-        </main>
+        <main className="flex-1 flex flex-col">{children}</main>
       </div>
     </HydrationBoundary>
   );
