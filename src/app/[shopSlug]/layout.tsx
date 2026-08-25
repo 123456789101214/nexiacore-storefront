@@ -8,9 +8,6 @@ import { storefrontKeys } from "@/hooks/useStorefront";
 import { apiClient } from "@/lib/api/client";
 import type { Shop, SingleEnvelope } from "@/types/storefront";
 
-
-
-
 async function getShopData(shopSlug: string) {
   try {
     const res = await apiClient.get<SingleEnvelope<Shop>>(`/api/storefront/${shopSlug}`);
