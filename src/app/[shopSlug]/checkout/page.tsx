@@ -7,21 +7,26 @@ import { Lock, CreditCard, Banknote, Building, Truck, Store, AlertTriangle } fro
 import { useCartStore } from "@/store/useCartStore";
 import { useCheckoutMutation } from "@/hooks/useCheckout";
 import { useCustomerSession } from "@/hooks/useCustomerAuth";
+import { useShop } from "@/hooks/useStorefront";
 import { CartLineItem } from "@/components/storefront/CartLineItem";
 import { ApiError } from "@/lib/api/client";
-import type { DeliveryMethodInput, PaymentMethodInput, ShippingDetails, InsufficientStockError } from "@/types/checkout";
+import type { DeliveryMethodInput, PaymentMethodInput, ShippingDetails } from "@/types/checkout";
+import type { Shop } from "@/types/storefront";
 
 export default function CheckoutPage() {
   const params = useParams();
   const router = useRouter();
   const shopSlug = params.shopSlug as string;
 
+  // 💡 Pull shop data to retrieve dynamic delivery fee
+  const { data: shop } = useShop(shopSlug);
+
   const { items, clearCart, updateQuantity, removeItem } = useCartStore();
   const { data: isSessionActive } = useCustomerSession(shopSlug);
   const checkoutMutation = useCheckoutMutation(shopSlug);
 
   const [mounted, setMounted] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false); // FIX: Track successful order state
+  const [isSuccess, setIsSuccess] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethodInput>("delivery");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodInput>("cod");
   
@@ -42,7 +47,6 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setMounted(true);
-    // FIX: Only kick them out if the cart is empty AND they didn't just place an order
     if (items.length === 0 && !isSuccess) {
       router.push(`/${shopSlug}/products`);
     }
@@ -62,7 +66,6 @@ export default function CheckoutPage() {
       items: items.map(i => ({ productSlug: i.productSlug, quantity: i.quantity })),
       deliveryMethod,
       paymentMethod,
-      // Always send shippingDetails for guests to capture Phone/Email
       ...((deliveryMethod === "delivery" || !isSessionActive) && { 
         shippingDetails: {
           fullName: shippingDetails.fullName || "Guest Customer",
@@ -78,7 +81,7 @@ export default function CheckoutPage() {
 
     checkoutMutation.mutate(payload, {
       onSuccess: (data) => {
-        setIsSuccess(true); // FIX: Set success to true BEFORE clearing the cart!
+        setIsSuccess(true);
         clearCart();
         router.push(`/${shopSlug}/orders/${data.orderId}/track`);
       },
@@ -97,7 +100,13 @@ export default function CheckoutPage() {
   };
 
   const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const deliveryFee = deliveryMethod === "delivery" ? 250 : 0;
+  
+  // 💡 Safe type extension since types/storefront.ts is strictly locked and cannot be modified.
+  const extendedShop = shop as (Shop & { deliveryFee?: number }) | undefined;
+  const dynamicDeliveryFee = extendedShop?.deliveryFee || 0;
+  
+  // Apply fee ONLY if method is delivery
+  const deliveryFee = deliveryMethod === "delivery" ? dynamicDeliveryFee : 0;
   const total = subtotal + deliveryFee;
 
   if (!mounted || (items.length === 0 && !isSuccess)) return null;
