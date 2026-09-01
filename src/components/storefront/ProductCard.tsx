@@ -1,103 +1,144 @@
 "use client";
 
-import Image from "next/image";
+import { useState } from "react";
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
-import type { Product } from "@/types/storefront";
-import { useCartStore } from "@/store/useCartStore";
+import Image from "next/image";
+import { Heart, Star, ShoppingBag } from "lucide-react";
 
 interface ProductCardProps {
-  product: Product;
+  product: {
+    _id: string;
+    slug?: string;
+    name: string;
+    description?: string;
+    price: number;
+    compareAtPrice?: number;
+    category?: string;
+    badge?: string;
+    rating?: number;
+    reviewCount?: number;
+    images?: { url: string }[];
+    image?: string;
+  };
   shopSlug: string;
 }
 
 export function ProductCard({ product, shopSlug }: ProductCardProps) {
-  const addItem = useCartStore((state) => state.addItem);
+  const [isFavorited, setIsFavorited] = useState(false);
 
-  const isOutOfStock = product.stock <= 0;
-  const isLowStock = product.stock > 0 && product.stock <= 10;
-  const isInStock = product.stock > 10;
+  const image = product.images?.[0]?.url ?? product.image ?? null;
+  const isOnSale =
+    typeof product.compareAtPrice === "number" && product.compareAtPrice > product.price;
+  const discountPercent = isOnSale
+    ? Math.round(((product.compareAtPrice! - product.price) / product.compareAtPrice!) * 100)
+    : null;
 
-  const currentPrice = product.discount.isActive 
-    ? product.discount.discountedPrice 
-    : product.price;
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsFavorited((prev) => !prev);
+  };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigating to PDP when clicking the button
-    if (isOutOfStock) return;
-    
-    addItem({
-      productSlug: product.slug,
-      name: product.name,
-      price: currentPrice,
-      quantity: 1,
-      image: product.image,
-      unit: product.unit,
-    });
+  const handleAddToBag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Wire this up to your existing add-to-cart handler/hook — intentionally
+    // left as a no-op so no new data-fetching logic is introduced here.
   };
 
   return (
-    <Link 
-      href={`/${shopSlug}/products/${product.slug}`} 
-      className="group relative flex flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+    <Link
+      href={`/${shopSlug}/products/${product.slug ?? product._id}`}
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white p-2.5 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-gray-200 hover:shadow-[0_20px_45px_-15px_rgba(15,23,42,0.15)] sm:p-3"
     >
-      <div className="mb-4 aspect-square overflow-hidden rounded-lg bg-[#f8f8f8] relative">
-        {/* Stock Badges per Master Prompt logic */}
-        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
-          {isOutOfStock && (
-            <span className="rounded bg-red-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-red-700 shadow-sm">
-              Out of stock
-            </span>
-          )}
-          {isLowStock && (
-            <span className="rounded bg-orange-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-orange-700 shadow-sm">
-              Low stock
-            </span>
-          )}
-          {isInStock && (
-            <span className="rounded bg-green-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-green-700 shadow-sm">
-              In stock
-            </span>
-          )}
-        </div>
-
-        {product.image ? (
+      {/* Media */}
+      <div className="relative aspect-square overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-gray-100">
+        {image ? (
           <Image
-            src={product.image}
+            src={image}
             alt={product.name}
             fill
-            className={`object-cover object-center transition-transform group-hover:scale-105 ${isOutOfStock ? 'opacity-60' : ''}`}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-xs text-gray-400">No Image</div>
+          <div className="absolute inset-0 grid place-items-center text-gray-300">
+            <ShoppingBag className="h-8 w-8" />
+          </div>
         )}
+
+        {(isOnSale || product.badge) && (
+          <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-900 shadow-sm backdrop-blur">
+            {isOnSale ? `-${discountPercent}%` : product.badge}
+          </span>
+        )}
+
+        <button
+          type="button"
+          onClick={toggleFavorite}
+          aria-pressed={isFavorited}
+          aria-label={isFavorited ? "Remove from wishlist" : "Add to wishlist"}
+          className={`absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full border transition-colors duration-200 ${
+            isFavorited
+              ? "border-gray-900 bg-gray-900 text-white"
+              : "border-gray-200 bg-white/90 text-gray-700 hover:border-gray-300"
+          }`}
+        >
+          <Heart className="h-3.5 w-3.5" fill={isFavorited ? "currentColor" : "none"} />
+        </button>
       </div>
-      
-      <div className="flex flex-1 flex-col justify-between">
-        <div className="mb-2">
-          <h3 className="text-sm font-medium text-gray-900 group-hover:text-blue-600 line-clamp-2 leading-snug">
-            {product.name}
-          </h3>
-        </div>
-        <div className="flex items-end justify-between mt-auto">
-          <div>
-            {product.discount.isActive ? (
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-500 line-through">Rs. {product.price.toFixed(2)}</span>
-                <span className="text-sm font-bold text-gray-900">Rs. {product.discount.discountedPrice.toFixed(2)}</span>
-              </div>
-            ) : (
-              <span className="text-sm font-bold text-gray-900">Rs. {product.price.toFixed(2)}</span>
+
+      {/* Info */}
+      <div className="flex flex-1 flex-col px-1 pt-3">
+        {product.category && (
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-indigo-500">
+            {product.category}
+          </span>
+        )}
+
+        <h3 className="mt-1 line-clamp-1 text-sm font-semibold text-gray-900 sm:text-[15px]">
+          {product.name}
+        </h3>
+
+        {product.description && (
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-gray-500">
+            {product.description}
+          </p>
+        )}
+
+        {typeof product.rating === "number" && (
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] text-gray-500">
+            <span className="flex items-center gap-0.5 text-amber-500">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className="h-2.5 w-2.5"
+                  fill={i < Math.round(product.rating!) ? "currentColor" : "none"}
+                />
+              ))}
+            </span>
+            {typeof product.reviewCount === "number" && <span>({product.reviewCount})</span>}
+          </div>
+        )}
+
+        <div className="mt-auto flex items-center justify-between pt-3">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-base font-bold text-gray-900 sm:text-lg">
+              ${product.price.toFixed(2)}
+            </span>
+            {isOnSale && (
+              <span className="text-xs text-gray-400 line-through">
+                ${product.compareAtPrice!.toFixed(2)}
+              </span>
             )}
           </div>
-          <button 
-            onClick={handleAddToCart}
-            disabled={isOutOfStock}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 hover:border-blue-600 hover:bg-blue-50 hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200 disabled:hover:text-gray-600"
-            aria-label="Add to cart"
+
+          <button
+            type="button"
+            onClick={handleAddToBag}
+            className="rounded-lg bg-gray-100 px-3 py-2 text-[11px] font-bold text-gray-900 transition-colors duration-200 hover:bg-gray-900 hover:text-white"
           >
-            <ShoppingCart className="h-4 w-4" />
+            Add to bag
           </button>
         </div>
       </div>

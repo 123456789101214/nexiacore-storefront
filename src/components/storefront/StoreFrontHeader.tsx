@@ -3,7 +3,20 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { Search, ShoppingCart, Menu, X, User } from "lucide-react";
+import { 
+  Search, 
+  ShoppingBag, 
+  Menu, 
+  X, 
+  User, 
+  ChevronRight, 
+  Moon, 
+  MapPin, 
+  SlidersHorizontal, 
+  ShieldCheck, 
+  ArrowRight,
+  ChevronDown
+} from "lucide-react";
 import { useShop, useCategories } from "@/hooks/useStorefront";
 import { useCartStore } from "@/store/useCartStore";
 import { useCustomerSession } from "@/hooks/useCustomerAuth";
@@ -25,6 +38,7 @@ export function StoreFrontHeader() {
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -43,7 +57,6 @@ export function StoreFrontHeader() {
     return () => { document.body.style.overflow = "unset"; };
   }, [isMobileMenuOpen, isCartDrawerOpen]);
 
-  // FIX: Strictly prioritize the Email address first to match Gmail-style behavior!
   const getInitial = () => {
     if (!session) return "";
     if (session.email) return session.email.charAt(0).toUpperCase();
@@ -55,81 +68,157 @@ export function StoreFrontHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-gray-100 bg-white/80 backdrop-blur-lg transition-all">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          
-          {/* Left: Mobile Menu Toggle & Logo */}
-          <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-50 w-full font-sans text-[#0b0d12]">
+        
+        {/* Topbar */}
+        <div className="hidden sm:block bg-[#0b0d12] text-white text-[12px]">
+          <div className="mx-auto flex min-h-[36px] w-[min(1240px,calc(100%-64px))] items-center justify-between lg:w-[min(1240px,calc(100%-80px))] xl:w-[min(1240px,calc(100%-112px))]">
+            <span>Complimentary delivery on orders over Rs. 15,000</span>
+            <div className="flex items-center gap-[12px] opacity-85">
+              <button className="flex items-center gap-1.5 font-bold transition-opacity hover:opacity-80">
+                Delivering to <strong className="text-white">Sri Lanka</strong> <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+              <span className="opacity-35">•</span>
+              <Link href={`/${shopSlug}/about`} className="transition-opacity hover:opacity-75">
+                Concierge
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Navigation Wrap - Increased paddings and height for mobile/tab breathing room */}
+        <div className="bg-white/90 backdrop-blur-[16px] border-b border-[#0b0d12]/[0.09] mix-blend-normal">
+          <div className="mx-auto grid min-h-[155px] w-[min(1240px,calc(100%-48px))] grid-cols-[auto_1fr_auto] items-center gap-[16px] sm:w-[min(1240px,calc(100%-64px))] sm:gap-[20px] lg:min-h-[76px] lg:w-[min(1240px,calc(100%-80px))] lg:grid-cols-[auto_auto_1fr_auto] xl:w-[min(1240px,calc(100%-112px))]">
+            
+            {/* Mobile Menu Toggle */}
             <button 
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-gray-900 transition-colors"
+              aria-label="Open menu"
+              aria-expanded={isMobileMenuOpen}
+              className="flex h-[46px] w-[46px] items-center justify-center rounded-full border border-[#0b0d12]/[0.09] bg-white text-[#0b0d12] transition-all duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(11,13,18,0.06)] focus-visible:outline-2 focus-visible:outline-[#5a5cf6] focus-visible:outline-offset-3 lg:hidden"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-[24px] w-[24px]" strokeWidth={2} />
             </button>
-            
-            <Link href={`/${shopSlug}`} className="flex items-center gap-3 group">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-xl font-bold text-white shadow-sm transition-transform group-hover:scale-105">
-                {shopLoading ? "" : shop?.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-lg font-bold leading-tight text-gray-900">{shop?.name || "Loading..."}</h1>
-                <p className="text-xs font-medium text-gray-500">Home. Crafted. Sri Lanka.</p>
-              </div>
+
+            {/* Brand Logo */}
+            <Link 
+              href={`/${shopSlug}`} 
+              aria-label={`${shop?.name || 'Shop'} home`} 
+              className="group flex items-center gap-[12px] rounded-md text-[18px] font-[950] uppercase tracking-[0.18em] text-[#0b0d12] focus-visible:outline-2 focus-visible:outline-[#5a5cf6] focus-visible:outline-offset-3"
+            >
+              <span className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#0b0d12] text-[15px] text-white shadow-[inset_0_-1px_0_rgba(255,255,255,0.15)] transition-transform duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:scale-105">
+                {shopLoading ? "N" : (shop?.name.charAt(0).toUpperCase() || "N")}
+              </span>
+              <span className="hidden sm:block mt-0.5">{shop?.name || "NEOLUX"}</span>
+            </Link>
+
+            {/* Desktop Links */}
+            <nav aria-label="Primary" className="hidden lg:flex items-center gap-[24px] text-[14px] font-[900] text-[#0b0d12]">
+              <Link href={`/${shopSlug}/products`} className="transition-opacity hover:opacity-70">New arrivals</Link>
+              <Link href={`/${shopSlug}/products`} className="transition-opacity hover:opacity-70">Best sellers</Link>
+              <Link href={`/${shopSlug}/about`} className="transition-opacity hover:opacity-70">Journal</Link>
+              <Link href={`/${shopSlug}/orders/track`} className="transition-opacity hover:opacity-70">Track Order</Link>
+            </nav>
+
+            {/* Search Input - Allowed a bit more vertical padding on mobile */}
+            <div className="order-3 col-span-full mb-2 flex h-[50px] items-center gap-[12px] rounded-[16px] border border-[#0b0d12]/[0.09] bg-white/85 px-[16px] lg:order-none lg:col-auto lg:mb-0 lg:h-[46px] transition-colors focus-within:border-[#5a5cf6] focus-within:shadow-[0_0_0_1px_#5a5cf6]">
+              <Search className="h-[20px] w-[20px] text-[#69707d]" strokeWidth={2.5} />
+              <input 
+                type="search" 
+                placeholder="Search products, brands, styles..." 
+                autoComplete="off"
+                className="w-full bg-transparent text-[15px] text-[#0b0d12] outline-none placeholder:text-[#69707d]" 
+              />
+              <kbd className="hidden rounded-[7px] border border-[#0b0d12]/[0.09] px-2 py-[3px] text-[11px] font-bold text-[#69707d] xl:block">⌘ K</kbd>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-[10px] justify-end">
+              <button aria-label="Toggle theme" className="hidden lg:flex h-[46px] w-[46px] items-center justify-center rounded-full border border-[#0b0d12]/[0.09] bg-white text-[#0b0d12] transition-all duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(11,13,18,0.06)]">
+                <Moon className="h-[20px] w-[20px]" strokeWidth={2} />
+              </button>
+              
+              <button aria-label="Choose location" className="hidden lg:flex h-[46px] w-[46px] items-center justify-center rounded-full border border-[#0b0d12]/[0.09] bg-white text-[#0b0d12] transition-all duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(11,13,18,0.06)]">
+                <MapPin className="h-[20px] w-[20px]" strokeWidth={2} />
+              </button>
+
+              <Link 
+                href={`/${shopSlug}/account/orders`} 
+                aria-label="Account"
+                className="hidden sm:flex h-[46px] w-[46px] items-center justify-center rounded-full border border-[#0b0d12]/[0.09] bg-white text-[#0b0d12] transition-all duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(11,13,18,0.06)] focus-visible:outline-2 focus-visible:outline-[#5a5cf6] focus-visible:outline-offset-3"
+              >
+                {session ? (
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-[#5a5cf6] text-[15px] font-[900] text-white">
+                    {userInitial}
+                  </div>
+                ) : (
+                  <User className="h-[22px] w-[22px]" strokeWidth={2} />
+                )}
+              </Link>
+
+              <button 
+                onClick={() => setIsCartDrawerOpen(true)}
+                aria-label="Shopping bag"
+                className="flex h-[46px] items-center gap-[10px] rounded-full border border-[#0b0d12]/[0.09] bg-white px-4 text-[#0b0d12] transition-all duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(11,13,18,0.06)] focus-visible:outline-2 focus-visible:outline-[#5a5cf6] focus-visible:outline-offset-3"
+              >
+                <ShoppingBag className="h-[22px] w-[22px]" strokeWidth={2} />
+                <span className="hidden sm:block text-[14px] font-[900]">Bag</span>
+                <b className="flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#5a5cf6] text-[12px] font-bold text-white px-1">
+                  {mounted ? cartCount : 0}
+                </b>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Announcement Bar */}
+        <div className="bg-white border-b border-[#0b0d12]/[0.09]">
+          <div className="mx-auto flex min-h-[46px] w-[min(1240px,calc(100%-48px))] items-center gap-[12px] py-2 text-[12px] sm:w-[min(1240px,calc(100%-64px))] lg:w-[min(1240px,calc(100%-80px))] xl:w-[min(1240px,calc(100%-112px))]">
+            <span className="shrink-0 rounded-[7px] bg-[#1d8f66]/10 px-[8px] py-[5px] text-[10px] font-[900] tracking-[0.12em] text-[#1d8f66]">LIVE</span>
+            <span className="truncate leading-relaxed">48-hour studio drop · Selected items up to 30% off</span>
+            <Link href={`/${shopSlug}/products`} className="ml-auto flex shrink-0 items-center gap-1.5 font-[800] transition-opacity hover:opacity-70">
+              Explore <ArrowRight className="h-[14px] w-[14px]" />
             </Link>
           </div>
+        </div>
 
-          {/* Center: Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-gray-700 h-full">
-            <div className="relative group h-full flex items-center">
-              <Link href={`/${shopSlug}/products`} className="flex items-center gap-1 hover:text-blue-600 transition-colors py-8">
-                Categories <span className="text-[10px] opacity-50 transition-transform group-hover:rotate-180">▼</span>
-              </Link>
-              <div className="absolute top-[70px] left-0 w-56 rounded-xl border border-gray-100 bg-white p-2 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all translate-y-2 group-hover:translate-y-0">
+        {/* Commerce Bar (Categories & Shortcuts) */}
+        <div className="hidden lg:block bg-white border-b border-[#0b0d12]/[0.09]">
+          <div className="mx-auto flex min-h-[48px] w-[min(1240px,calc(100%-80px))] items-center gap-[24px] xl:w-[min(1240px,calc(100%-112px))]">
+            
+            <div className="group relative flex h-full items-center">
+              <button className="flex items-center gap-[8px] rounded-[10px] bg-[#0b0d12] px-[12px] py-[9px] text-[12px] font-[900] text-white transition-all hover:bg-[#0b0d12]/90">
+                <SlidersHorizontal className="h-[16px] w-[16px]" strokeWidth={2.5} /> Browse categories
+              </button>
+              
+              <div className="absolute left-0 top-full mt-1 w-60 invisible translate-y-2 rounded-[22px] border border-[#0b0d12]/[0.09] bg-white p-3 opacity-0 shadow-[0_22px_60px_rgba(11,13,18,0.10)] transition-all duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                <div className="px-3 pb-2 pt-1 text-[11px] font-[800] uppercase tracking-[0.12em] text-[#69707d]">
+                  Shop by category
+                </div>
                 {categories?.map((cat) => (
                   <Link 
                     key={cat.name} 
                     href={`/${shopSlug}/products?category=${encodeURIComponent(cat.name)}`}
-                    className="block rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors"
+                    className="block rounded-[12px] px-3 py-2.5 text-[14px] font-[700] text-[#0b0d12] transition-colors hover:bg-[#eef0f4]"
                   >
                     {cat.name}
                   </Link>
                 ))}
               </div>
             </div>
-            <Link href={`/${shopSlug}/about`} className="hover:text-blue-600 transition-colors">About</Link>
-            <Link href={`/${shopSlug}/orders/track`} className="hover:text-blue-600 transition-colors">Track Order</Link>
-          </nav>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-4 sm:gap-6">
-            <button className="text-gray-600 hover:text-blue-600 transition-colors p-2 -mr-2 sm:mr-0">
-              <Search className="h-5 w-5" />
-            </button>
-            
-            {/* DYNAMIC AVATAR: Gmail Style */}
-            <Link href={`/${shopSlug}/account/orders`} className="hidden sm:block text-gray-600 hover:text-blue-600 transition-colors p-2">
-              {session ? (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-sm ring-2 ring-white hover:ring-blue-100 transition-all">
-                  {userInitial}
-                </div>
-              ) : (
-                <User className="h-5 w-5" />
-              )}
-            </Link>
+            <nav aria-label="Marketplace shortcuts" className="flex items-center gap-[24px] text-[12px] font-[850] text-[#69707d]">
+              <Link href={`/${shopSlug}/products`} className="transition-colors hover:text-[#5a5cf6]">Flash deals</Link>
+              <Link href={`/${shopSlug}/products`} className="transition-colors hover:text-[#5a5cf6]">Top rated</Link>
+            </nav>
 
-            <button 
-              onClick={() => setIsCartDrawerOpen(true)}
-              className="relative flex items-center text-gray-600 hover:text-blue-600 transition-colors p-2"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {mounted && cartCount > 0 && (
-                <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
-                  {cartCount}
-                </span>
-              )}
-            </button>
+            <span className="ml-auto flex items-center gap-[6px] text-[11px] font-[900] text-[#1d8f66]">
+              <ShieldCheck className="h-[16px] w-[16px]" strokeWidth={2.5} /> Buyer protected
+            </span>
           </div>
         </div>
+
       </header>
 
       {/* Cart Drawer Component */}
@@ -139,69 +228,113 @@ export function StoreFrontHeader() {
         shopSlug={shopSlug} 
       />
 
-      {/* Mobile Navigation Drawer */}
-      <div className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}>
-         <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
-         <div className={`absolute inset-y-0 left-0 w-[85%] max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-in-out flex flex-col ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      {/* Mobile Navigation Drawer - Extra padding for breathable mobile experience */}
+      <aside 
+        className={`fixed inset-0 z-[100] transition-opacity duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+        aria-hidden={!isMobileMenuOpen}
+      >
+         <div className="absolute inset-0 bg-[#0b0d12]/60 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+         
+         <div className={`absolute inset-y-0 left-0 flex w-[min(88vw,420px)] flex-col bg-white p-[36px] sm:p-[36px] transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-6"}`}>
             
-            <div className="flex h-20 shrink-0 items-center justify-between border-b px-6">
-              <Link href={`/${shopSlug}`} className="flex items-center gap-3">
-                 <div className="flex h-8 w-8 items-center justify-center rounded bg-blue-600 text-sm font-bold text-white">
-                  {shopLoading ? "" : shop?.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="font-bold text-gray-900">{shop?.name}</span>
-              </Link>
-              <button onClick={() => setIsMobileMenuOpen(false)} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 transition-colors">
-                <X className="h-5 w-5" />
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-[8px] text-[13px] font-[800] uppercase tracking-[0.14em] text-[#69707d]">
+                Menu
+              </span>
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)} 
+                aria-label="Close menu"
+                className="flex h-[46px] w-[46px] items-center justify-center rounded-full border border-[#0b0d12]/[0.09] bg-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(11,13,18,0.06)]"
+              >
+                <X className="h-[24px] w-[24px] text-[#0b0d12]" strokeWidth={2} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-6">
-              <nav className="flex flex-col gap-6 font-semibold text-gray-900">
-                <Link href={`/${shopSlug}/products`} className="text-lg hover:text-blue-600 transition-colors">All Products</Link>
+            <nav className="mt-[32px] grid">
+              <Link href={`/${shopSlug}/products`} className="flex items-center justify-between border-b border-[#0b0d12]/[0.09] py-[22px] sm:py-[24px] text-[22px] font-[900] tracking-[-0.03em] text-[#0b0d12]">
+                New arrivals <ChevronRight className="h-[20px] w-[20px]" strokeWidth={2.5} />
+              </Link>
+              
+              <div className="border-b border-[#0b0d12]/[0.09] py-[22px] sm:py-[24px]">
+                <button 
+                  onClick={() => setIsMobileCategoriesOpen(!isMobileCategoriesOpen)}
+                  className="flex w-full items-center justify-between text-[13px] font-[800] uppercase tracking-[0.14em] text-[#69707d] transition-opacity hover:opacity-80"
+                  aria-expanded={isMobileCategoriesOpen}
+                >
+                  <span>Categories</span>
+                  <ChevronDown 
+                    className={`h-[16px] w-[16px] transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isMobileCategoriesOpen ? "rotate-180" : ""}`} 
+                    strokeWidth={2.5} 
+                  />
+                </button>
                 
-                <div className="h-px w-full bg-gray-100" />
-                
-                <div className="space-y-4 text-gray-600">
-                  <p className="text-xs uppercase tracking-wider text-gray-400 font-bold">Categories</p>
-                  {categories?.map((cat) => (
-                    <Link 
-                      key={cat.name} 
-                      href={`/${shopSlug}/products?category=${encodeURIComponent(cat.name)}`}
-                      className="block text-base hover:text-blue-600 transition-colors"
-                    >
-                      {cat.name}
-                    </Link>
-                  ))}
+                {/* Smooth Dropdown Container */}
+                <div 
+                  className={`grid transition-all duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
+                    isMobileCategoriesOpen 
+                      ? "grid-rows-[1fr] opacity-100 mt-5" 
+                      : "grid-rows-[0fr] opacity-0 mt-0"
+                  }`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="grid gap-4 pb-2">
+                      {categories?.map((cat) => (
+                        <Link 
+                          key={cat.name} 
+                          href={`/${shopSlug}/products?category=${encodeURIComponent(cat.name)}`}
+                          onClick={() => setIsMobileMenuOpen(false)} // Link eka click karama drawer eka close wenna
+                          className="text-[18px] font-[700] text-[#0b0d12] transition-colors hover:text-[#5a5cf6]"
+                        >
+                          {cat.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 </div>
+              </div>
 
-                <div className="h-px w-full bg-gray-100" />
-                
-                {/* MOBILE DYNAMIC AVATAR PROFILE BLOCK */}
-                <Link href={`/${shopSlug}/account/orders`} className="flex items-center gap-3 text-base text-gray-600 hover:text-blue-600 group">
-                  {session ? (
-                    <>
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-sm group-hover:bg-blue-700 transition-colors">
-                        {userInitial}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-gray-900 leading-tight">My Orders</span>
-                        <span className="text-xs text-gray-500 font-normal">{session.email}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <User className="h-5 w-5" /> My Account
-                    </>
-                  )}
-                </Link>
-                
-                <Link href={`/${shopSlug}/orders/track`} className="text-base text-gray-600 hover:text-blue-600">Track Order</Link>
-                <Link href={`/${shopSlug}/about`} className="text-base text-gray-600 hover:text-blue-600">About Us</Link>
-              </nav>
+              <Link href={`/${shopSlug}/orders/track`} className="flex items-center justify-between border-b border-[#0b0d12]/[0.09] py-[22px] sm:py-[24px] text-[22px] font-[900] tracking-[-0.03em] text-[#0b0d12]">
+                Track Order <ChevronRight className="h-[20px] w-[20px]" strokeWidth={2.5} />
+              </Link>
+              <Link href={`/${shopSlug}/about`} className="flex items-center justify-between border-b border-[#0b0d12]/[0.09] py-[22px] sm:py-[24px] text-[22px] font-[900] tracking-[-0.03em] text-[#0b0d12]">
+                Journal <ChevronRight className="h-[20px] w-[20px]" strokeWidth={2.5} />
+              </Link>
+            </nav>
+
+            <div className="mt-auto grid gap-[12px] rounded-[20px] bg-[#eef0f4] p-[24px]">
+              <span className="flex items-center gap-[8px] text-[13px] font-[800] uppercase tracking-[0.14em] text-[#69707d]">
+                Account
+              </span>
+              
+              {session ? (
+                <div className="mt-1 flex items-center justify-between gap-4">
+                  <div className="truncate">
+                    <strong className="block text-[20px] font-bold leading-none text-[#0b0d12] truncate">
+                      {session.name || "Customer"}
+                    </strong>
+                    <span className="mt-1.5 block text-[13px] font-medium text-[#69707d] truncate">{session.email}</span>
+                  </div>
+                  <Link 
+                    href={`/${shopSlug}/account/orders`} 
+                    className="flex shrink-0 h-[46px] items-center justify-center rounded-full bg-[#5a5cf6] px-5 text-[14px] font-[900] text-white shadow-[0_10px_22px_rgba(90,92,246,0.22)] transition-transform duration-200 hover:-translate-y-0.5"
+                  >
+                    My Orders
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-1 flex items-center justify-between">
+                  <strong className="text-[20px] font-bold text-[#0b0d12]">Guest</strong>
+                  <Link 
+                    href={`/${shopSlug}/account/orders`} 
+                    className="flex h-[44px] items-center justify-center rounded-full border border-[#0b0d12]/[0.14] bg-transparent px-6 text-[14px] font-[800] text-[#0b0d12] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-white"
+                  >
+                    Sign In
+                  </Link>
+                </div>
+              )}
             </div>
          </div>
-      </div>
+      </aside>
     </>
   );
 }

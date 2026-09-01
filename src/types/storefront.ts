@@ -79,3 +79,13 @@ export interface ProductListFilters {
   page?: number;
   limit?: number;
 }
+
+export interface FlashDealsProps {
+  shopSlug: string;
+}
+
+export interface FeaturedProductsProps {
+  shopSlug: string;
+  productsLoading: boolean;
+  productsData?: { products: Product[] };
+}
